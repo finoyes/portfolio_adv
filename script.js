@@ -159,7 +159,6 @@ class ReactiveBackground {
         const gameOverTitle = document.getElementById('game-over-title');
         const finalScore = document.getElementById('final-score');
         const finalPlanets = document.getElementById('final-planets');
-        const finalRank = document.getElementById('final-rank');
         const resultMessage = document.getElementById('result-message');
         
         // Set win/lose title
@@ -178,17 +177,8 @@ class ReactiveBackground {
             }
         }
         
-        // Calculate rank
-        let rank = 'CADET';
-        if (this.score >= 500) rank = 'ADMIRAL';
-        else if (this.score >= 350) rank = 'CAPTAIN';
-        else if (this.score >= 200) rank = 'COMMANDER';
-        else if (this.score >= 100) rank = 'PILOT';
-        else if (this.score >= 50) rank = 'EXPLORER';
-        
         finalScore.textContent = this.score;
         finalPlanets.textContent = this.planetsExplored;
-        finalRank.textContent = rank;
         
         gameOverScreen.classList.remove('hidden');
     }
