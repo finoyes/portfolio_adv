@@ -38,7 +38,7 @@ class ReactiveBackground {
         this.gameTime = 60;
         this.gameTimer = null;
         this.gamePaused = false;
-        this.targetScore = 200;
+        this.targetScore = 10000;
         this.gameWon = false;
         
         this.init();
@@ -80,7 +80,7 @@ class ReactiveBackground {
         this.score = 0;
         this.planetsExplored = 0;
         this.gameTime = 60;
-        this.targetScore = 200;
+        this.targetScore = 10000;
         this.gameWon = false;
         
         // Reset planets
@@ -492,6 +492,59 @@ class ReactiveBackground {
             }
             return true;
         });
+        
+        // Planet-to-planet collision detection
+        for (let i = 0; i < this.planets.length; i++) {
+            for (let j = i + 1; j < this.planets.length; j++) {
+                const p1 = this.planets[i];
+                const p2 = this.planets[j];
+                
+                if (p1.discovered || p2.discovered) continue;
+                
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDist = p1.size + p2.size;
+                
+                if (distance < minDist && distance > 0) {
+                    // Collision detected - elastic collision
+                    const angle = Math.atan2(dy, dx);
+                    const overlap = minDist - distance;
+                    
+                    // Separate planets
+                    const separateX = Math.cos(angle) * overlap * 0.5;
+                    const separateY = Math.sin(angle) * overlap * 0.5;
+                    p1.x -= separateX;
+                    p1.y -= separateY;
+                    p2.x += separateX;
+                    p2.y += separateY;
+                    
+                    // Calculate collision response (elastic)
+                    const m1 = p1.size;
+                    const m2 = p2.size;
+                    
+                    // Relative velocity
+                    const dvx = p1.vx - p2.vx;
+                    const dvy = p1.vy - p2.vy;
+                    
+                    // Relative velocity in collision normal direction
+                    const dvNormal = dvx * Math.cos(angle) + dvy * Math.sin(angle);
+                    
+                    // Don't resolve if velocities are separating
+                    if (dvNormal > 0) continue;
+                    
+                    // Calculate impulse
+                    const restitution = 0.8;
+                    const impulse = (-(1 + restitution) * dvNormal) / (1/m1 + 1/m2);
+                    
+                    // Apply impulse
+                    p1.vx += (impulse / m1) * Math.cos(angle);
+                    p1.vy += (impulse / m1) * Math.sin(angle);
+                    p2.vx -= (impulse / m2) * Math.cos(angle);
+                    p2.vy -= (impulse / m2) * Math.sin(angle);
+                }
+            }
+        }
         
         this.planets.forEach(planet => {
             // Calculate age and opacity
