@@ -80,7 +80,7 @@ class ReactiveBackground {
         this.score = 0;
         this.planetsExplored = 0;
         this.gameTime = 60;
-        this.targetScore = 10000;
+        this.targetScore = 2500;
         this.gameWon = false;
         
         // Reset planets
