@@ -1167,6 +1167,111 @@ class CursorEffect {
 }
 
 // ================================
+// Interactive Pixel Grid for Project Cards
+// ================================
+class PixelGrid {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.pixels = [];
+        this.mouse = { x: -1000, y: -1000 };
+        this.pixelSize = 8;
+        this.gap = 2;
+        this.isHovered = false;
+        
+        this.init();
+        this.addEventListeners();
+        this.animate();
+    }
+    
+    init() {
+        this.resize();
+    }
+    
+    resize() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+        this.createPixels();
+    }
+    
+    createPixels() {
+        this.pixels = [];
+        const cols = Math.floor(this.canvas.width / (this.pixelSize + this.gap));
+        const rows = Math.floor(this.canvas.height / (this.pixelSize + this.gap));
+        
+        const offsetX = (this.canvas.width - cols * (this.pixelSize + this.gap)) / 2;
+        const offsetY = (this.canvas.height - rows * (this.pixelSize + this.gap)) / 2;
+        
+        for (let i = 0; i < cols; i++) {
+            for (let j = 0; j < rows; j++) {
+                this.pixels.push({
+                    x: offsetX + i * (this.pixelSize + this.gap),
+                    y: offsetY + j * (this.pixelSize + this.gap),
+                    baseAlpha: 0.1 + Math.random() * 0.1,
+                    alpha: 0.1 + Math.random() * 0.1,
+                    targetAlpha: 0.1,
+                    pulseOffset: Math.random() * Math.PI * 2,
+                    pulseSpeed: 0.02 + Math.random() * 0.02
+                });
+            }
+        }
+    }
+    
+    addEventListeners() {
+        const parent = this.canvas.parentElement.parentElement;
+        
+        parent.addEventListener('mouseenter', () => {
+            this.isHovered = true;
+        });
+        
+        parent.addEventListener('mouseleave', () => {
+            this.isHovered = false;
+            this.mouse = { x: -1000, y: -1000 };
+        });
+        
+        parent.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouse.x = e.clientX - rect.left;
+            this.mouse.y = e.clientY - rect.top;
+        });
+        
+        window.addEventListener('resize', () => this.resize());
+    }
+    
+    animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.pixels.forEach(pixel => {
+            // Calculate distance from mouse
+            const dx = this.mouse.x - (pixel.x + this.pixelSize / 2);
+            const dy = this.mouse.y - (pixel.y + this.pixelSize / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = 80;
+            
+            // Calculate target alpha based on mouse proximity
+            if (this.isHovered && distance < maxDistance) {
+                const intensity = (maxDistance - distance) / maxDistance;
+                pixel.targetAlpha = 0.3 + intensity * 0.7;
+            } else {
+                // Subtle pulse when not hovered
+                pixel.pulseOffset += pixel.pulseSpeed;
+                pixel.targetAlpha = pixel.baseAlpha + Math.sin(pixel.pulseOffset) * 0.05;
+            }
+            
+            // Smooth transition
+            pixel.alpha += (pixel.targetAlpha - pixel.alpha) * 0.15;
+            
+            // Draw pixel
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${pixel.alpha})`;
+            this.ctx.fillRect(pixel.x, pixel.y, this.pixelSize, this.pixelSize);
+        });
+        
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+// ================================
 // Initialize Everything
 // ================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -1176,6 +1281,11 @@ document.addEventListener('DOMContentLoaded', () => {
     new SkillBars();
     new ContactForm();
     new CursorEffect();
+    
+    // Initialize pixel grids for project cards
+    document.querySelectorAll('.pixel-canvas').forEach(canvas => {
+        new PixelGrid(canvas);
+    });
 });
 
 // Smooth scroll polyfill for older browsers
