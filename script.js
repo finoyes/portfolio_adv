@@ -1207,9 +1207,13 @@ class PixelGrid {
         
         for (let i = 0; i < cols; i++) {
             for (let j = 0; j < rows; j++) {
+                const baseX = offsetX + i * (this.pixelSize + this.gap);
+                const baseY = offsetY + j * (this.pixelSize + this.gap);
                 this.pixels.push({
-                    x: offsetX + i * (this.pixelSize + this.gap),
-                    y: offsetY + j * (this.pixelSize + this.gap),
+                    x: baseX,
+                    y: baseY,
+                    baseX: baseX, // Store original position for magnetic effect
+                    baseY: baseY,
                     baseAlpha: 0.1 + Math.random() * 0.1,
                     alpha: 0.1 + Math.random() * 0.1,
                     targetAlpha: 0.1,
@@ -1294,6 +1298,28 @@ class PixelGrid {
                 }
             });
             
+            // Magnetic effect - pixels are attracted towards cursor
+            const magneticRange = 100;
+            const magneticStrength = 4; // Max pixels to move
+            const dxMag = this.mouse.x - (pixel.baseX + this.pixelSize / 2);
+            const dyMag = this.mouse.y - (pixel.baseY + this.pixelSize / 2);
+            const distMag = Math.sqrt(dxMag * dxMag + dyMag * dyMag);
+            
+            let targetX = pixel.baseX;
+            let targetY = pixel.baseY;
+            
+            if (this.isHovered && distMag < magneticRange && distMag > 0) {
+                const magnetFactor = (magneticRange - distMag) / magneticRange;
+                const pullX = (dxMag / distMag) * magnetFactor * magneticStrength;
+                const pullY = (dyMag / distMag) * magnetFactor * magneticStrength;
+                targetX = pixel.baseX + pullX;
+                targetY = pixel.baseY + pullY;
+            }
+            
+            // Smooth transition for position
+            pixel.x += (targetX - pixel.x) * 0.15;
+            pixel.y += (targetY - pixel.y) * 0.15;
+            
             // Calculate target alpha based on intensity
             if (maxIntensity > 0) {
                 pixel.targetAlpha = 0.2 + maxIntensity * 0.8;
@@ -1303,7 +1329,7 @@ class PixelGrid {
                 pixel.targetAlpha = pixel.baseAlpha + Math.sin(pixel.pulseOffset) * 0.05;
             }
             
-            // Smooth transition
+            // Smooth transition for alpha
             pixel.alpha += (pixel.targetAlpha - pixel.alpha) * 0.15;
             
             // Draw pixel
