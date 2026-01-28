@@ -490,12 +490,15 @@ section {
     border-bottom: 1px solid var(--gray-700);
     position: relative;
     overflow: hidden;
+    min-height: 180px;
 }
 
 .pixel-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    display: block;
 }
 
 .project-placeholder {

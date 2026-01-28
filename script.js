@@ -1175,6 +1175,8 @@ class PixelGrid {
         this.ctx = canvas.getContext('2d');
         this.pixels = [];
         this.mouse = { x: -1000, y: -1000 };
+        this.mouseTrail = []; // Store previous mouse positions
+        this.maxTrailLength = 15; // Number of trail points to keep
         this.pixelSize = 8;
         this.gap = 2;
         this.isHovered = false;
@@ -1228,12 +1230,21 @@ class PixelGrid {
         parent.addEventListener('mouseleave', () => {
             this.isHovered = false;
             this.mouse = { x: -1000, y: -1000 };
+            // Trail will fade out in animate loop
         });
         
         parent.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = e.clientX - rect.left;
             this.mouse.y = e.clientY - rect.top;
+            
+            // Add current position to trail with full opacity
+            this.mouseTrail.unshift({ x: this.mouse.x, y: this.mouse.y, opacity: 1 });
+            
+            // Limit trail length
+            if (this.mouseTrail.length > this.maxTrailLength) {
+                this.mouseTrail.pop();
+            }
         });
         
         window.addEventListener('resize', () => this.resize());
@@ -1242,19 +1253,52 @@ class PixelGrid {
     animate() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Fade out trail points over time
+        this.mouseTrail.forEach((point, index) => {
+            // Decrease opacity gradually
+            point.opacity -= 0.02;
+        });
+        
+        // Remove fully faded trail points
+        this.mouseTrail = this.mouseTrail.filter(point => point.opacity > 0);
+        
         this.pixels.forEach(pixel => {
-            // Calculate distance from mouse
-            const dx = this.mouse.x - (pixel.x + this.pixelSize / 2);
-            const dy = this.mouse.y - (pixel.y + this.pixelSize / 2);
+            const pixelCenterX = pixel.x + this.pixelSize / 2;
+            const pixelCenterY = pixel.y + this.pixelSize / 2;
+            
+            let maxIntensity = 0;
+            
+            // Check distance from current mouse position
+            const dx = this.mouse.x - pixelCenterX;
+            const dy = this.mouse.y - pixelCenterY;
             const distance = Math.sqrt(dx * dx + dy * dy);
             const maxDistance = 80;
             
-            // Calculate target alpha based on mouse proximity
             if (this.isHovered && distance < maxDistance) {
                 const intensity = (maxDistance - distance) / maxDistance;
-                pixel.targetAlpha = 0.3 + intensity * 0.7;
+                maxIntensity = Math.max(maxIntensity, intensity);
+            }
+            
+            // Check distance from trail points (with fading opacity)
+            this.mouseTrail.forEach((point) => {
+                const trailDx = point.x - pixelCenterX;
+                const trailDy = point.y - pixelCenterY;
+                const trailDistance = Math.sqrt(trailDx * trailDx + trailDy * trailDy);
+                const trailMaxDistance = 50; // Radius for trail glow
+                
+                if (trailDistance < trailMaxDistance) {
+                    // Intensity based on distance and point's current opacity
+                    const distanceFactor = (trailMaxDistance - trailDistance) / trailMaxDistance;
+                    const trailIntensity = distanceFactor * point.opacity * 0.6;
+                    maxIntensity = Math.max(maxIntensity, trailIntensity);
+                }
+            });
+            
+            // Calculate target alpha based on intensity
+            if (maxIntensity > 0) {
+                pixel.targetAlpha = 0.2 + maxIntensity * 0.8;
             } else {
-                // Subtle pulse when not hovered
+                // Subtle pulse when not affected by mouse
                 pixel.pulseOffset += pixel.pulseSpeed;
                 pixel.targetAlpha = pixel.baseAlpha + Math.sin(pixel.pulseOffset) * 0.05;
             }
@@ -1282,10 +1326,13 @@ document.addEventListener('DOMContentLoaded', () => {
     new ContactForm();
     new CursorEffect();
     
-    // Initialize pixel grids for project cards
-    document.querySelectorAll('.pixel-canvas').forEach(canvas => {
-        new PixelGrid(canvas);
-    });
+    // Initialize pixel grids for project cards after a short delay
+    // to ensure proper sizing
+    setTimeout(() => {
+        document.querySelectorAll('.pixel-canvas').forEach(canvas => {
+            new PixelGrid(canvas);
+        });
+    }, 100);
 });
 
 // Smooth scroll polyfill for older browsers
