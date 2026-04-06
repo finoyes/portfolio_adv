@@ -310,8 +310,8 @@ function $(S, e, N = {}) {
 }
 function I(t, e, r, a) {
   var o = e.element.getBoundingClientRect(),
-    n = e.cols || Math.floor(o.width / r.g),
-    i = e.rows || Math.floor(o.height / r.lineHeight);
+    n = e.cols || Math.floor((o.width / r.g) * (e.density || 1)),
+    i = e.rows || Math.floor((o.height / r.lineHeight) * (e.density || 1));
   return Object.freeze({
     frame: t.frame,
     time: t.time,
@@ -1049,6 +1049,9 @@ function F(t) {
           .toString(16)
           .padStart(2, "0");
 }
+function Bt(t, e = 1) {
+  return m(L(t.r * e, 0, 255), L(t.G * e, 0, 255), L(t.b * e, 0, 255), t.a);
+}
 function g(t) {
   return { a: 1, r: (t >> 16) & 255, G: (t >> 8) & 255, b: 255 & t };
 }
@@ -1238,11 +1241,11 @@ var xt = Object.freeze({
     }
     if ("white" == a.color) ((E.tt = "lightgray"), (E.et = "white"));
     else if (a.color)
-      (t.frame % 480 == 0 && ((V.a = C(z)), (V.b = C(z))),
-        (q.a = O(q.a, V.a, 0.01)),
-        (q.b = O(q.b, V.b, 0.01)),
-        (E.tt = F(q.a)),
-        (E.et = F(q.b)));
+      (t.frame % 160 == 0 && ((V.a = C(z)), (V.b = C(z))),
+        (q.a = O(q.a, V.a, 0.03)),
+        (q.b = O(q.b, V.b, 0.03)),
+        (E.tt = F(Bt(q.a, 1.32))),
+        (E.et = F(Bt(q.b, 1.22))));
     else {
       ((e = (o = e).q), (i = o.x - e.x), (o = o.y - e.y));
       var e = Math.sqrt(i * i + o * o),
@@ -1258,7 +1261,8 @@ var xt = Object.freeze({
         i *
         i *
         (i * (6 * i - 15) + 10);
-      ((E.tt = F(O(V.a, q.a, e))), (E.et = F(O(V.b, q.b, e))));
+      ((E.tt = F(Bt(O(V.a, q.a, e), 1.3))),
+      (E.et = F(Bt(O(V.b, q.b, e), 1.18))));
     }
     if (
       ("screensaver" == a.mode &&
@@ -1305,7 +1309,8 @@ var xt = Object.freeze({
 });
 function Mt(t) {
   var e = document.querySelector("#bg-animation-canvas");
-  ($(xt, { element: e, v: "canvas", background: "#000000", color: "rainbow", p: 60, M: !1 }, t),
+  (e && ((e.style.fontSize = "12px"), (e.style.lineHeight = "1.1")),
+  $(xt, { element: e, v: "canvas", background: "#000000", color: "rainbow", p: 60, density: 1.18, M: !1 }, t),
     document.addEventListener("keydown", (t) => {
       "f" == t.key &&
         document.body.requestFullscreen &&
