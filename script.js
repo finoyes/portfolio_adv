@@ -68,7 +68,6 @@ const COMMANDS = {
     contact: 'Contact links',
     themes: 'List available themes',
     'theme <name>': 'Apply a theme',
-    interact: 'Open an interactive procedural panel',
     resetboot: 'Reset boot flag and rerun POST on next reload',
     design: 'Explain design approach and anti-design hobby',
     date: 'Show local date and time',
@@ -116,8 +115,6 @@ req   : |_____|___|____|____`,
 data  : xxxx<he><bo><ta>xxxx
 req   : |____|_____|___|___`
 ];
-
-const INTERACT_CHARS = ' .:-=+*#%@';
 
 const SKILL_GROUPS = {
     languages: ['Python', 'JavaScript', 'Dart', 'C / C++'],
@@ -176,10 +173,6 @@ class TerminalApp {
         this.designAudio.loop = false;
         this.waveformTimer = null;
         this.waveformFrameIndex = 0;
-        this.interactTimer = null;
-        this.interactFrame = 0;
-        this.interactState = { x: 0.5, y: 0.5 };
-        this.interactCleanup = null;
 
         this.history = [];
         this.historyIndex = -1;
@@ -427,10 +420,6 @@ class TerminalApp {
             return;
         }
 
-        if (baseCmd !== 'interact') {
-            this.teardownInteract();
-        }
-
         switch (baseCmd) {
             case 'help':
                 this.printHelp();
@@ -456,9 +445,6 @@ class TerminalApp {
             case 'theme':
                 this.applyTheme(argText);
                 break;
-            case 'interact':
-                this.printInteract();
-                break;
             case 'resetboot':
                 this.resetBootSequence();
                 break;
@@ -469,7 +455,6 @@ class TerminalApp {
                 this.printDate();
                 break;
             case 'clear':
-                this.teardownInteract();
                 this.outputEl.innerHTML = '';
                 break;
             default:
@@ -597,121 +582,6 @@ class TerminalApp {
         image.addEventListener('mouseleave', () => this.stopDesignAudio());
         image.addEventListener('dragstart', (event) => event.preventDefault());
         image.addEventListener('copy', (event) => event.preventDefault());
-    }
-
-    printInteract() {
-        this.printBlock([
-            this.makeLine('INTERACT', 'text-orange'),
-            this.makeLine('Procedural field inspired by studio screensavers and realtime visual systems.', 'text-comment'),
-            this.makeLine('Move the pointer over the panel to bias the field; it keeps moving on its own.', 'text-comment')
-        ]);
-
-        this.printRaw(`
-            <section class="interact-lab" aria-label="Interactive procedural panel">
-                <div class="interact-topline">
-                    <span class="interact-chip">screen mode</span>
-                    <span class="interact-chip">procedural ascii</span>
-                    <span class="interact-chip">pointer reactive</span>
-                </div>
-                <pre class="interact-field" aria-hidden="true"></pre>
-                <div class="interact-readout">
-                    <span>cursor x <strong class="interact-readout-value interact-readout-x">50%</strong></span>
-                    <span>cursor y <strong class="interact-readout-value interact-readout-y">50%</strong></span>
-                    <span>phase <strong class="interact-readout-value interact-readout-phase">0.00</strong></span>
-                </div>
-            </section>
-        `);
-
-        const panel = this.outputEl.lastElementChild?.querySelector('.interact-lab');
-        if (!panel) return;
-
-        const fieldEl = panel.querySelector('.interact-field');
-        const xEl = panel.querySelector('.interact-readout-x');
-        const yEl = panel.querySelector('.interact-readout-y');
-        const phaseEl = panel.querySelector('.interact-readout-phase');
-
-        const renderFrame = () => {
-            if (!fieldEl) return;
-
-            const width = 54;
-            const height = 17;
-            const chars = INTERACT_CHARS;
-            const rows = [];
-            const phase = this.interactFrame * 0.18;
-            const biasX = this.interactState.x * 2 - 1;
-            const biasY = this.interactState.y * 2 - 1;
-
-            for (let row = 0; row < height; row += 1) {
-                let line = '';
-                for (let col = 0; col < width; col += 1) {
-                    const nx = width > 1 ? (col / (width - 1)) * 2 - 1 : 0;
-                    const ny = height > 1 ? (row / (height - 1)) * 2 - 1 : 0;
-                    const dx = nx - biasX;
-                    const dy = ny - biasY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const wave = Math.sin(distance * 9 - phase) + Math.cos((nx + ny) * 4 + phase * 1.5);
-                    const pulse = 1 - Math.min(1, distance * 1.2);
-                    const level = Math.max(0, Math.min(chars.length - 1, Math.floor(((wave + 2.2) / 4.4) * (chars.length - 1) + pulse * 2)));
-                    line += chars[level];
-                }
-                rows.push(line);
-            }
-
-            fieldEl.textContent = rows.join('\n');
-            if (xEl) xEl.textContent = `${Math.round(this.interactState.x * 100)}%`;
-            if (yEl) yEl.textContent = `${Math.round(this.interactState.y * 100)}%`;
-            if (phaseEl) phaseEl.textContent = phase.toFixed(2);
-            this.interactFrame += 1;
-        };
-
-        const updatePointer = (event) => {
-            const rect = panel.getBoundingClientRect();
-            const x = rect.width ? (event.clientX - rect.left) / rect.width : 0.5;
-            const y = rect.height ? (event.clientY - rect.top) / rect.height : 0.5;
-            this.interactState.x = Math.min(1, Math.max(0, x));
-            this.interactState.y = Math.min(1, Math.max(0, y));
-        };
-
-        const resetPointer = () => {
-            this.interactState.x = 0.5;
-            this.interactState.y = 0.5;
-        };
-
-        const handleEnter = (event) => updatePointer(event);
-        const handleMove = (event) => updatePointer(event);
-        const handleLeave = () => resetPointer();
-
-        panel.addEventListener('pointerenter', handleEnter);
-        panel.addEventListener('pointermove', handleMove);
-        panel.addEventListener('pointerleave', handleLeave);
-
-        this.teardownInteract();
-        this.interactCleanup = () => {
-            panel.removeEventListener('pointerenter', handleEnter);
-            panel.removeEventListener('pointermove', handleMove);
-            panel.removeEventListener('pointerleave', handleLeave);
-            if (this.interactTimer !== null) {
-                window.clearInterval(this.interactTimer);
-                this.interactTimer = null;
-            }
-            this.interactFrame = 0;
-            resetPointer();
-        };
-
-        this.interactTimer = window.setInterval(renderFrame, 90);
-        renderFrame();
-    }
-
-    teardownInteract() {
-        if (typeof this.interactCleanup === 'function') {
-            this.interactCleanup();
-        } else if (this.interactTimer !== null) {
-            window.clearInterval(this.interactTimer);
-            this.interactTimer = null;
-            this.interactFrame = 0;
-            this.interactState = { x: 0.5, y: 0.5 };
-        }
-        this.interactCleanup = null;
     }
 
     playDesignAudio() {
