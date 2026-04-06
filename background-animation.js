@@ -201,44 +201,44 @@ function $(S, e, N = {}) {
         (((t = s.element).style.userSelect = "none"),
         (t.style.webkitUserSelect = "none"),
         (t.style.B = "none"),
-        (t.dataset.C = "false")),
-      document.fonts.ready.then((t) => {
-        let r = 3;
-        !(function t() {
-          var e;
-          0 < --r
-            ? requestAnimationFrame(t)
-            : ((w = (function r(a) {
-                let t = getComputedStyle(a);
-                let e = t.getPropertyValue("font-family");
-                let o = parseFloat(t.getPropertyValue("line-height"));
-                let n = parseFloat(t.getPropertyValue("font-size"));
-                let i =
-                  "CANVAS" == a.nodeName ? a : document.createElement("canvas");
-                let l = i.getContext("2d");
-                l.font = n + "px " + e;
-                let f = l.measureText("".padEnd(10, "x")).width / 10;
-                let s = f / o;
-                let u = {
-                  O: s,
-                  g: f,
-                  lineHeight: o,
-                  fontFamily: e,
-                  fontSize: n,
-                  F: function () {
-                    let t = r(a);
-                    for (var e in t)
-                      ("number" != typeof t[e] && "string" != typeof t[e]) ||
-                        (u[e] = t[e]);
-                  },
-                };
-                return u;
-              })(s.element)),
-              (e = I(u, s, w, m)),
-              "function" == typeof S.V && S.V(e, b, N),
-              requestAnimationFrame(k));
-        })();
-      }));
+        (t.dataset.C = "false")));
+    document.fonts.ready.then((t) => {
+      let r = 3;
+      !(function t() {
+        var e;
+        0 < --r
+          ? requestAnimationFrame(t)
+          : ((w = (function r(a) {
+              let t = getComputedStyle(a);
+              let e = t.getPropertyValue("font-family");
+              let o = parseFloat(t.getPropertyValue("line-height"));
+              let n = parseFloat(t.getPropertyValue("font-size"));
+              let i =
+                "CANVAS" == a.nodeName ? a : document.createElement("canvas");
+              let l = i.getContext("2d");
+              l.font = n + "px " + e;
+              let f = l.measureText("".padEnd(10, "x")).width / 10;
+              let s = f / o;
+              let u = {
+                O: s,
+                g: f,
+                lineHeight: o,
+                fontFamily: e,
+                fontSize: n,
+                F: function () {
+                  let t = r(a);
+                  for (var e in t)
+                    ("number" != typeof t[e] && "string" != typeof t[e]) ||
+                      (u[e] = t[e]);
+                },
+              };
+              return u;
+            })(s.element)),
+            (e = I(u, s, w, m)),
+            "function" == typeof S.V && S.V(e, b, N),
+            requestAnimationFrame(k));
+      })();
+    });
     let m = new D(),
       y = " ",
       g = Object.freeze({
@@ -1309,8 +1309,34 @@ var xt = Object.freeze({
 });
 function Mt(t) {
   var e = document.querySelector("#bg-animation-canvas");
+  let r = !0;
+  let o = { color: "rainbow" };
+  var a = () => {
+    e &&
+      ((e.style.visibility = r ? "visible" : "hidden"),
+      (e.style.opacity = r ? "0.72" : "0"),
+      (e.style.pointerEvents = r ? "auto" : "none"));
+  };
   (e && ((e.style.fontSize = "12px"), (e.style.lineHeight = "1.1")),
-  $(xt, { element: e, v: "canvas", background: "#000000", color: "rainbow", p: 60, density: 1.18, M: !1 }, t),
+  $(xt, { element: e, v: "canvas", background: "#000000", color: "rainbow", p: 60, density: 1.18, M: !1 }, o),
+    (window.bgAnimationControl = {
+      toggle: function () {
+        return ((r = !r), a(), r);
+      },
+      setEnabled: function (t) {
+        return ((r = Boolean(t)), a(), r);
+      },
+      isEnabled: function () {
+        return r;
+      },
+      setCharacterColor: function (t) {
+        return ((o.color = t), o.color);
+      },
+      getCharacterColor: function () {
+        return o.color;
+      },
+    }),
+    a(),
     document.addEventListener("keydown", (t) => {
       "f" == t.key &&
         document.body.requestFullscreen &&

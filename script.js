@@ -71,6 +71,8 @@ const COMMANDS = {
     'theme <name>': 'Apply a theme',
     resetboot: 'Reset boot flag and rerun POST on next reload',
     design: 'Explain design approach and anti-design hobby',
+    'bganim [on|off|status]': 'Toggle background animation visibility',
+    'bgcolor <hex>': 'Set background animation character color (hex)',
     date: 'Show local date and time',
     clear: 'Clear terminal output'
 };
@@ -456,6 +458,12 @@ class TerminalApp {
             case 'design':
                 this.printDesign();
                 break;
+            case 'bganim':
+                this.toggleBackgroundAnimation(argText);
+                break;
+            case 'bgcolor':
+                this.setBackgroundAnimationCharacterColor(argText);
+                break;
             case 'date':
                 this.printDate();
                 break;
@@ -629,6 +637,82 @@ class TerminalApp {
         const now = new Date();
         this.printBlock([
             this.makeLine(now.toLocaleString(), 'text-green')
+        ]);
+    }
+
+    toggleBackgroundAnimation(argText) {
+        const control = window.bgAnimationControl;
+        const mode = (argText || '').trim().toLowerCase();
+
+        if (!control || typeof control.toggle !== 'function') {
+            this.printBlock([
+                this.makeLine('Background animation controller is unavailable.', 'text-red')
+            ]);
+            return;
+        }
+
+        if (!mode) {
+            const enabled = control.toggle();
+            this.printBlock([
+                this.makeLine(`Background animation: ${enabled ? 'ON' : 'OFF'}`, 'text-green')
+            ]);
+            return;
+        }
+
+        if (mode === 'status') {
+            this.printBlock([
+                this.makeLine(`Background animation: ${control.isEnabled() ? 'ON' : 'OFF'}`, 'text-cyan')
+            ]);
+            return;
+        }
+
+        if (mode === 'on' || mode === 'off') {
+            const enabled = control.setEnabled(mode === 'on');
+            this.printBlock([
+                this.makeLine(`Background animation: ${enabled ? 'ON' : 'OFF'}`, 'text-green')
+            ]);
+            return;
+        }
+
+        this.printBlock([
+            this.makeLine('Usage: bganim [on|off|status]', 'text-yellow')
+        ]);
+    }
+
+    setBackgroundAnimationCharacterColor(argText) {
+        const control = window.bgAnimationControl;
+        const raw = (argText || '').trim();
+
+        if (!control || typeof control.setCharacterColor !== 'function') {
+            this.printBlock([
+                this.makeLine('Background animation controller is unavailable.', 'text-red')
+            ]);
+            return;
+        }
+
+        if (!raw || raw.toLowerCase() === 'status') {
+            const current = typeof control.getCharacterColor === 'function' ? control.getCharacterColor() : 'unknown';
+            this.printBlock([
+                this.makeLine(`Background character color: ${current}`, 'text-cyan'),
+                this.makeLine('Usage: bgcolor <hex>', 'text-comment')
+            ]);
+            return;
+        }
+
+        const normalized = raw.startsWith('#') ? raw : `#${raw}`;
+        const isValidHex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized);
+
+        if (!isValidHex) {
+            this.printBlock([
+                this.makeLine('Invalid hex color. Use #RGB or #RRGGBB.', 'text-yellow'),
+                this.makeLine('Example: bgcolor #00ffcc', 'text-comment')
+            ]);
+            return;
+        }
+
+        const applied = control.setCharacterColor(normalized);
+        this.printBlock([
+            this.makeLine(`Background character color set to ${applied}`, 'text-green')
         ]);
     }
 
