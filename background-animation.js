@@ -154,7 +154,7 @@ let r = {
     cols: 0,
     rows: 0,
     once: !1,
-    p: 30,
+    p: 60,
     v: "text",
     background: "",
     color: "",
