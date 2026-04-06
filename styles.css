@@ -248,7 +248,7 @@ body::before {
     display: flex;
     align-items: center;
     background: transparent;
-    padding: 10px 0 12px;
+    padding: 10px 0 calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 .prompt {
@@ -457,7 +457,22 @@ a.terminal-link:hover {
     }
 
     .output-pre {
-        font-size: clamp(9px, 2.6vw, 13px);
+        font-size: clamp(10px, 2.8vw, 14px);
+        line-height: 1.24;
+    }
+
+    .ascii-scroll-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .ascii-scroll-lane {
+        width: 100%;
+        animation: none;
+    }
+
+    .ascii-scroll-track {
+        min-width: max-content;
     }
 
     .design-image {
@@ -480,6 +495,7 @@ a.terminal-link:hover {
     }
 
     .output-pre {
-        font-size: clamp(8px, 2.9vw, 12px);
+        font-size: clamp(10px, 3.2vw, 13px);
+        line-height: 1.28;
     }
 }
