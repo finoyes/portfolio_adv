@@ -11,6 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <canvas id="bg-animation-canvas" aria-hidden="true"></canvas>
+
     <aside class="sigil-side" aria-hidden="true">
         <pre id="side-sigil" class="sigil-side-pre"></pre>
         <pre id="sigil-waveform" class="sigil-waveform" aria-hidden="true">clk   : _/\/\_/\/\_/\/\_
@@ -33,6 +35,7 @@ req   : |____|____|____|__</pre>
         </div>
     </div>
 
+    <script src="background-animation.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
