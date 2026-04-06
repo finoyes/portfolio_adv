@@ -1,0 +1,21 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e5]: ___ _ _ _ _ __ _ _ /_\ ___| |_ ____ _(_) |_ | |/ /___| |_ (_)_ _ ___ __ _ _ _ / _ \/ _ \ _/ _\ \/ / | _| | ' _<_|\__| |_|\_\___|_||_|_|_| /__/\__,_|_|
+    - generic [ref=e6]: Welcome to the Advait Kshirsagar Interactive Terminal (v1.0.0)
+    - generic [ref=e7]: Type 'help' to see a list of available commands.
+    - generic [ref=e12]: visitor@advait.dev:~$ about
+    - generic [ref=e15]: ".----. ===(_)== // 6 6 \\\\ ( 7 ) \\ '--' / \\_ ._/ __) (__ /\"`/`\\`V/`\\`\\"
+    - generic [ref=e16]: I'm a passionate computer science student currently in my second year,
+    - generic [ref=e17]: pursuing a Bachelor's degree in Computer Science.
+    - generic [ref=e19]: My journey in tech began with a fascination for how software works.
+    - generic [ref=e20]: From building my first website as a teenager to now developing full-stack applications,
+    - generic [ref=e21]: I've always been driven by curiosity and the desire to create solutions that make a difference.
+    - generic [ref=e23]: Currently focused on expanding my knowledge in software development, algorithms, and machine learning.
+    - generic [ref=e24]: I believe in writing clean, efficient code and continuously challenge myself to learn new technologies.
+    - generic [ref=e26]: "Stats:"
+    - generic [ref=e27]: "- 2nd Year Student"
+    - generic [ref=e28]: "- 8 Projects Completed"
+    - generic [ref=e29]: "- 1 Internships"
+  - generic [ref=e8]:
+    - generic [ref=e9]: visitor@advait.dev:~$
+    - textbox [active] [ref=e10]

@@ -1,0 +1,15 @@
+- generic [ref=e31]:
+  - generic:
+    - generic:
+      - generic: TIME
+      - generic: "60"
+    - generic:
+      - generic: SCORE
+      - generic: "0"
+    - generic:
+      - generic: TARGET
+      - generic: "2500"
+    - generic:
+      - generic: PLANETS
+      - generic: "0"
+  - button "[ EXIT GAME ]" [ref=e32] [cursor=pointer]
