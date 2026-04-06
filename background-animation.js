@@ -1238,7 +1238,7 @@ var xt = Object.freeze({
     }
     if ("white" == a.color) ((E.tt = "lightgray"), (E.et = "white"));
     else if (a.color)
-      (t.frame % 2e3 == 0 && ((V.a = C(z)), (V.b = C(z))),
+      (t.frame % 480 == 0 && ((V.a = C(z)), (V.b = C(z))),
         (q.a = O(q.a, V.a, 0.01)),
         (q.b = O(q.b, V.b, 0.01)),
         (E.tt = F(q.a)),
@@ -1305,7 +1305,7 @@ var xt = Object.freeze({
 });
 function Mt(t) {
   var e = document.querySelector("#bg-animation-canvas");
-  ($(xt, { element: e, v: "canvas", background: "#000000", color: "#ffffff", p: 60, M: !1 }, t),
+  ($(xt, { element: e, v: "canvas", background: "#000000", color: "rainbow", p: 60, M: !1 }, t),
     document.addEventListener("keydown", (t) => {
       "f" == t.key &&
         document.body.requestFullscreen &&
