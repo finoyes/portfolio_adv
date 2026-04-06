@@ -66,6 +66,7 @@ const COMMANDS = {
     projects: 'Current project list',
     skills: 'Core tech stack',
     contact: 'Contact links',
+    gui: 'Open GUI portfolio tab (placeholder)',
     themes: 'List available themes',
     'theme <name>': 'Apply a theme',
     resetboot: 'Reset boot flag and rerun POST on next reload',
@@ -82,6 +83,7 @@ const THEME_PRESETS = {
 };
 
 const BOOT_SESSION_KEY = 'advait_terminal_boot_done_session';
+const GUI_PORTFOLIO_PLACEHOLDER_URL = 'https://example.com/portfolio';
 
 const PROFILE = {
     name: 'Advait Kshirsagar',
@@ -439,6 +441,9 @@ class TerminalApp {
             case 'contact':
                 this.printContact();
                 break;
+            case 'gui':
+                this.openGuiPortfolio();
+                break;
             case 'themes':
                 this.printThemes();
                 break;
@@ -560,6 +565,23 @@ class TerminalApp {
         this.printRaw(`GitHub: <a class="terminal-link" href="${PROFILE.github}" target="_blank" rel="noreferrer">${PROFILE.github}</a>`);
         this.printRaw('LinkedIn: listed on source portfolio');
         this.printRaw('Instagram: listed on source portfolio');
+    }
+
+    openGuiPortfolio() {
+        const openedTab = window.open(GUI_PORTFOLIO_PLACEHOLDER_URL, '_blank', 'noopener,noreferrer');
+
+        if (openedTab) {
+            this.printBlock([
+                this.makeLine('Opening GUI portfolio tab (placeholder)...', 'text-green'),
+                this.makeLine(GUI_PORTFOLIO_PLACEHOLDER_URL, 'text-comment')
+            ]);
+            return;
+        }
+
+        this.printBlock([
+            this.makeLine('Popup blocked. Allow popups to open the GUI tab.', 'text-yellow'),
+            this.makeLine(`Placeholder URL: ${GUI_PORTFOLIO_PLACEHOLDER_URL}`, 'text-comment')
+        ]);
     }
 
     printDesign() {
