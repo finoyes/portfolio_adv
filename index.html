@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <title>Advait Kshirsagar | Terminal</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sigil-side" aria-hidden="true">
+        <pre id="side-sigil" class="sigil-side-pre"></pre>
+        <pre id="sigil-waveform" class="sigil-waveform" aria-hidden="true">clk   : _/\/\_/\/\_/\/\_
+data  : xxxx&lt;he&gt;&lt;bo&gt;&lt;ta&gt;xxxx
+req   : |____|____|____|__</pre>
+    </aside>
+
+    <!-- Main Terminal Container -->
+    <div id="terminal-container" class="terminal-container">
+        <!-- Terminal history output -->
+        <div id="terminal-output"></div>
+
+        <!-- Terminal Input Line -->
+        <div class="terminal-input-line">
+            <span class="prompt">
+                <span class="prompt-user">visitor</span><span class="prompt-at">@</span><span class="prompt-host">advait.dev</span><span class="prompt-colon">:</span><span class="prompt-path">~</span><span class="prompt-char">$</span>
+            </span>
+            <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" autofocus>
+            <span class="cursor"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
