@@ -1,0 +1,5 @@
+# Encrypt all tracked files by default with git-crypt.
+* filter=git-crypt diff=git-crypt
+
+# Keep git attributes readable so encryption rules can be applied.
+.gitattributes !filter !diff
