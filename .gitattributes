@@ -3,3 +3,6 @@
 
 # Keep git attributes readable so encryption rules can be applied.
 .gitattributes !filter !diff
+
+# Workflow files must remain readable by GitHub to execute Actions.
+.github/workflows/** !filter !diff
