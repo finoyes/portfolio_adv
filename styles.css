@@ -104,9 +104,9 @@ body::before {
     height: 100%;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.72;
-    filter: brightness(1.3) contrast(1.38) saturate(1.7);
-    animation: bgHueShift 18s linear infinite;
+    opacity: 0.42;
+    filter: brightness(0.92) contrast(1.12) saturate(0.88);
+    animation: bgHueShift 24s linear infinite;
 }
 
 .terminal-container,
@@ -116,8 +116,8 @@ body::before {
 .prompt,
 #terminal-input {
     text-shadow:
-        0 0 4px rgba(255, 255, 255, 0.22),
-        0 0 10px rgba(255, 255, 255, 0.16);
+        0 0 5px rgba(255, 255, 255, 0.28),
+        0 0 12px rgba(255, 255, 255, 0.2);
     animation: textBloomPulse 2.6s ease-in-out infinite;
 }
 
@@ -125,13 +125,13 @@ body::before {
     0%,
     100% {
         text-shadow:
-            0 0 4px rgba(255, 255, 255, 0.2),
-            0 0 10px rgba(255, 255, 255, 0.14);
+            0 0 5px rgba(255, 255, 255, 0.24),
+            0 0 12px rgba(255, 255, 255, 0.18);
     }
     50% {
         text-shadow:
-            0 0 7px rgba(255, 255, 255, 0.35),
-            0 0 15px rgba(255, 255, 255, 0.24);
+            0 0 9px rgba(255, 255, 255, 0.42),
+            0 0 18px rgba(255, 255, 255, 0.3);
     }
 }
 
@@ -148,10 +148,10 @@ body::before {
 
 @keyframes bgHueShift {
     0% {
-        filter: brightness(1.15) contrast(1.3) saturate(1.45) hue-rotate(0deg);
+        filter: brightness(0.9) contrast(1.08) saturate(0.84) hue-rotate(0deg);
     }
     100% {
-        filter: brightness(1.15) contrast(1.3) saturate(1.45) hue-rotate(360deg);
+        filter: brightness(0.9) contrast(1.08) saturate(0.84) hue-rotate(360deg);
     }
 }
 
@@ -186,7 +186,7 @@ body::before {
     top: 24px;
     right: 16px;
     bottom: 24px;
-    width: 280px;
+    width: clamp(180px, 18vw, 260px);
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -202,12 +202,13 @@ body::before {
     margin: 0;
     color: rgba(255, 255, 255, 0.94);
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: clamp(4px, min(0.55vw, 0.9vh), 10px);
     font-weight: 700;
-    line-height: 1.04;
+    line-height: 0.96;
     white-space: pre;
     overflow: hidden;
     max-height: 100%;
+    max-width: 100%;
     transform-origin: center center;
     text-rendering: geometricPrecision;
     text-shadow:
@@ -222,7 +223,7 @@ body::before {
     width: 100%;
     color: var(--accent-soft);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: clamp(8px, 0.75vw, 11px);
     line-height: 1.1;
     white-space: pre;
     text-align: center;
@@ -263,6 +264,7 @@ body::before {
 
 .output-block {
     word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .design-image {
@@ -324,6 +326,7 @@ body::before {
     color: var(--fg);
     font-family: var(--font-mono);
     font-size: 1rem;
+    font-weight: 700;
     caret-color: transparent;
 }
 
@@ -399,6 +402,12 @@ body::before {
     text-rendering: geometricPrecision;
 }
 
+.output-block a,
+a.terminal-link {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 .ascii-banner {
     color: var(--accent-soft);
     font-weight: 500;
@@ -453,13 +462,39 @@ a.terminal-link:hover {
     display: none !important;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
     .terminal-container {
-        width: min(940px, calc(100% - 32px));
+        width: min(940px, calc(100% - 280px));
+    }
+
+    .sigil-side {
+        top: 16px;
+        right: 10px;
+        bottom: 16px;
+        width: clamp(150px, 16vw, 220px);
+    }
+
+    .sigil-side-pre {
+        font-size: clamp(4px, min(0.5vw, 0.75vh), 8px);
+    }
+
+    .sigil-waveform {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 900px) {
+    .terminal-container {
+        width: calc(100% - 20px);
+        padding: 18px 10px 32px;
     }
 
     .sigil-side {
         display: none;
+    }
+
+    .output-pre {
+        font-size: clamp(10px, 2.4vw, 14px);
     }
 }
 
@@ -533,7 +568,7 @@ a.terminal-link:hover {
     }
 
     #bg-animation-canvas {
-        opacity: 0.35;
+        opacity: 0.24;
     }
 
     .output-pre {

@@ -238,6 +238,7 @@ class TerminalApp {
     bindEvents() {
         this.inputEl.addEventListener('input', () => this.updateInputWidth());
         this.inputEl.addEventListener('keydown', (event) => this.handleKeyDown(event));
+        window.addEventListener('resize', () => this.updateInputWidth());
         document.addEventListener('click', () => {
             this.inputEl.focus();
         });

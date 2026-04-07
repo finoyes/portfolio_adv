@@ -1314,7 +1314,7 @@ function Mt(t) {
   var a = () => {
     e &&
       ((e.style.visibility = r ? "visible" : "hidden"),
-      (e.style.opacity = r ? "0.72" : "0"),
+      (e.style.opacity = r ? "0.42" : "0"),
       (e.style.pointerEvents = r ? "auto" : "none"));
   };
   (e && ((e.style.fontSize = "12px"), (e.style.lineHeight = "1.1")),
