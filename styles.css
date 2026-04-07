@@ -408,6 +408,16 @@ a.terminal-link {
     word-break: break-word;
 }
 
+.scramble-text {
+    cursor: pointer;
+}
+
+.scramble-text.is-scrambling {
+    text-shadow:
+        0 0 7px rgba(255, 255, 255, 0.34),
+        0 0 16px rgba(255, 255, 255, 0.24);
+}
+
 .ascii-banner {
     color: var(--accent-soft);
     font-weight: 500;

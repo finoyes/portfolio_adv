@@ -120,6 +120,9 @@ data  : xxxx<he><bo><ta>xxxx
 req   : |____|_____|___|___`
 ];
 
+const SCRAMBLE_GLYPHS = ' .,·-•─~+:;=*π’“”┐┌┘└┼├┤┴┬│╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@aàbcdefghijklmnoòpqrstuüvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%()'.split('');
+const SCRAMBLE_RADIUS_PX = 34;
+
 const SKILL_GROUPS = {
     languages: ['Python', 'JavaScript', 'Dart', 'C / C++'],
     technologies: ['Flutter', 'Node.js / Express', 'SQL / MongoDB', 'Git / GitHub'],
@@ -177,6 +180,7 @@ class TerminalApp {
         this.designAudio.loop = false;
         this.waveformTimer = null;
         this.waveformFrameIndex = 0;
+        this.scrambleStates = new WeakMap();
 
         this.history = [];
         this.historyIndex = -1;
@@ -186,6 +190,7 @@ class TerminalApp {
         this.bindEvents();
         this.renderSideSigil();
         this.bindAudioEvents();
+        this.bindStaticTextScramble();
         this.boot();
     }
 
@@ -198,6 +203,161 @@ class TerminalApp {
         this.designAudio.addEventListener('playing', () => this.startWaveformAnimation());
         this.designAudio.addEventListener('pause', () => this.stopWaveformAnimation());
         this.designAudio.addEventListener('ended', () => this.stopWaveformAnimation());
+    }
+
+    bindStaticTextScramble() {
+        this.bindTextScramble(this.sideSigilEl);
+    }
+
+    bindTextScramble(root) {
+        if (!root) return;
+
+        const selector = '.output-line, .output-pre, .terminal-link, .sigil-side-pre';
+        const targets = [];
+
+        if (root.matches && root.matches(selector)) {
+            targets.push(root);
+        }
+
+        if (root.querySelectorAll) {
+            targets.push(...root.querySelectorAll(selector));
+        }
+
+        for (const element of targets) {
+            if (!element || element.dataset.scrambleBound === 'true') continue;
+
+            element.dataset.scrambleBound = 'true';
+            element.classList.add('scramble-text');
+            element.addEventListener('pointerenter', (event) => this.startTextScramble(element, event));
+            element.addEventListener('pointermove', (event) => this.startTextScramble(element, event));
+            element.addEventListener('pointerleave', () => this.stopTextScramble(element));
+            element.addEventListener('pointercancel', () => this.stopTextScramble(element));
+        }
+    }
+
+    startTextScramble(element, event) {
+        if (!element) return;
+
+        const existing = this.scrambleStates.get(element);
+        const state = existing || {
+            originalText: element.textContent || '',
+            active: false,
+            lastText: ''
+        };
+
+        if (!existing) {
+            state.originalText = element.textContent || '';
+        }
+        state.active = true;
+        this.scrambleStates.set(element, state);
+        element.classList.add('is-scrambling');
+
+        this.updateTextScramble(element, event);
+    }
+
+    updateTextScramble(element, event) {
+        const state = this.scrambleStates.get(element);
+        if (!state || !state.active || !event) return;
+
+        const result = this.scrambleTextAroundPointer(element, state.originalText, event);
+        if (result && result !== state.lastText) {
+            element.textContent = result;
+            state.lastText = result;
+        }
+    }
+
+    stopTextScramble(element) {
+        const state = this.scrambleStates.get(element);
+        if (!state) return;
+
+        element.classList.remove('is-scrambling');
+        state.active = false;
+        state.lastText = '';
+        element.textContent = state.originalText;
+    }
+
+    scrambleTextAroundPointer(element, text, event) {
+        if (!text) return text;
+
+        const rect = element.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(element);
+        const fontSize = parseFloat(computedStyle.fontSize) || 16;
+        const lineHeight = this.getLineHeight(computedStyle, fontSize);
+        const charWidth = this.getCharWidth(element, computedStyle, fontSize);
+        const contentX = event.clientX - rect.left;
+        const contentY = event.clientY - rect.top;
+        const lines = text.split('\n');
+        const radius = SCRAMBLE_RADIUS_PX;
+        const radiusSquared = radius * radius;
+        let cursorSeed = Math.floor((contentX + contentY) + performance.now() / 40);
+        let changed = false;
+        const output = [];
+
+        for (let row = 0; row < lines.length; row++) {
+            const line = lines[row];
+            let lineOutput = '';
+
+            for (let column = 0; column < line.length; column++) {
+                const char = line[column];
+                if (/\s/.test(char)) {
+                    lineOutput += char;
+                    continue;
+                }
+
+                const charCenterX = column * charWidth + charWidth * 0.5;
+                const charCenterY = row * lineHeight + lineHeight * 0.5;
+                const dx = contentX - charCenterX;
+                const dy = contentY - charCenterY;
+                const distanceSquared = dx * dx + dy * dy;
+
+                if (distanceSquared <= radiusSquared) {
+                    const glyphIndex = (column * 11 + row * 17 + cursorSeed++) % SCRAMBLE_GLYPHS.length;
+                    lineOutput += SCRAMBLE_GLYPHS[glyphIndex];
+                    changed = true;
+                } else {
+                    lineOutput += char;
+                }
+            }
+
+            output.push(lineOutput);
+        }
+
+        return changed ? output.join('\n') : text;
+    }
+
+    getCharWidth(element, computedStyle, fontSize) {
+        const state = this.scrambleStates.get(element);
+        const cachedFont = state?.fontKey;
+        const fontKey = `${computedStyle.fontStyle}|${computedStyle.fontVariant}|${computedStyle.fontWeight}|${computedStyle.fontStretch}|${fontSize}|${computedStyle.fontFamily}`;
+
+        if (state && state.charWidth && cachedFont === fontKey) {
+            return state.charWidth;
+        }
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context) {
+            return fontSize * 0.6;
+        }
+
+        context.font = `${computedStyle.fontStyle} ${computedStyle.fontVariant} ${computedStyle.fontWeight} ${fontSize}px ${computedStyle.fontFamily}`;
+        const measured = context.measureText('0').width || fontSize * 0.6;
+
+        if (state) {
+            state.charWidth = measured;
+            state.fontKey = fontKey;
+        }
+
+        return measured;
+    }
+
+    getLineHeight(computedStyle, fontSize) {
+        const parsedLineHeight = parseFloat(computedStyle.lineHeight);
+        if (!Number.isNaN(parsedLineHeight)) {
+            return parsedLineHeight;
+        }
+
+        return fontSize * 1.2;
     }
 
     setWaveformPlaying(isPlaying) {
@@ -737,6 +897,7 @@ class TerminalApp {
         block.className = 'output-block';
         block.innerHTML = html;
         this.outputEl.appendChild(block);
+        this.bindTextScramble(block);
         this.scrollToBottom();
     }
 
@@ -745,6 +906,7 @@ class TerminalApp {
         block.className = 'output-block';
         block.innerHTML = lines.join('');
         this.outputEl.appendChild(block);
+        this.bindTextScramble(block);
         this.scrollToBottom();
     }
 
