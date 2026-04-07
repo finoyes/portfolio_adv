@@ -805,8 +805,11 @@ class TerminalApp {
         PROJECTS.forEach((project, index) => {
             lines.push(this.makeLine(`${index + 1}. ${project.name} [${project.stack}]`, 'text-cyan'));
             lines.push(this.makeLine(`   ${project.description}`, 'text-comment'));
-            lines.push(this.makeLine(`   ${project.github}`, 'text-green'));
+            lines.push(
+                `   <a class="terminal-link project-link text-green" href="${project.github}" target="_blank" rel="noreferrer" title="Ctrl/Cmd + Click to open">${this.escapeHTML(project.github)}</a>`
+            );
         });
+        lines.push(this.makeLine('Ctrl/Cmd + Click a project link to open its repository.', 'text-comment'));
         this.printBlock(lines);
     }
 

@@ -1108,15 +1108,23 @@ let z = [
   R;
 "ontouchstart" in window
   ? document.addEventListener("touchstart", function (t) {
-      t.target.href && (t.preventDefault(), (location.href = t.target.href));
+      const e = t.target?.closest?.("a[href]");
+      if (!e) return;
+      if (e.classList?.contains("project-link")) return;
+      (t.preventDefault(), (location.href = e.href));
     })
   : document.addEventListener("mousedown", function (t) {
-      0 === t.button &&
-        t.target.href &&
-        (t.preventDefault(),
-        "_blank" == t.target.target
-          ? window.open(t.target.href)
-          : (location.href = t.target.href));
+      if (0 !== t.button) return;
+      const e = t.target?.closest?.("a[href]");
+      if (!e) return;
+      if (e.classList?.contains("project-link") && !(t.ctrlKey || t.metaKey)) {
+        t.preventDefault();
+        return;
+      }
+      (t.preventDefault(),
+      "_blank" == e.target
+        ? window.open(e.href)
+        : (location.href = e.href));
     });
 var xt = Object.freeze({
   __proto__: null,
