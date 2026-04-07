@@ -1307,6 +1307,221 @@ var xt = Object.freeze({
   ct: m,
   ht: F,
 });
+
+const VAPORIZER_GLYPHS = j;
+const VAPORIZER_RADIUS_PX = 34;
+const VAPORIZER_REVEAL_MS = 700;
+const VAPORIZER_SELECTOR = '.output-line, .output-pre, .sigil-side-pre, .prompt';
+
+function createTextVaporizerEngine() {
+  const states = new WeakMap();
+
+  function getTargets(root) {
+    const targets = [];
+
+    if (root?.matches && root.matches(VAPORIZER_SELECTOR)) {
+      targets.push(root);
+    }
+
+    if (root?.querySelectorAll) {
+      targets.push(...root.querySelectorAll(VAPORIZER_SELECTOR));
+    }
+
+    return targets;
+  }
+
+  function attach(root) {
+    for (const element of getTargets(root)) {
+      if (!element || element.dataset.vaporizerBound === 'true') continue;
+
+      element.dataset.vaporizerBound = 'true';
+      element.classList.add('scramble-text');
+      element.addEventListener('pointerenter', handlePointerEvent);
+      element.addEventListener('pointermove', handlePointerEvent);
+      element.addEventListener('pointerleave', handlePointerLeave);
+      element.addEventListener('pointercancel', handlePointerLeave);
+    }
+  }
+
+  function handlePointerEvent(event) {
+    const element = event.currentTarget;
+    if (!element) return;
+
+    let state = states.get(element);
+    if (!state) {
+      state = {
+        originalText: element.textContent || '',
+        active: false,
+        lastText: '',
+        pointerX: 0,
+        pointerY: 0,
+        revealStart: 0,
+        frameId: null,
+        charWidth: 0,
+        fontKey: ''
+      };
+      states.set(element, state);
+    }
+
+    if (!state.active) {
+      state.originalText = element.textContent || state.originalText;
+    }
+
+    const nextPointerX = event.clientX;
+    const nextPointerY = event.clientY;
+    const pointerMoved = Math.abs(nextPointerX - state.pointerX) > 4 || Math.abs(nextPointerY - state.pointerY) > 4;
+
+    state.pointerX = nextPointerX;
+    state.pointerY = nextPointerY;
+    if (!state.active || pointerMoved) {
+      state.revealStart = performance.now();
+    }
+
+    state.active = true;
+    element.classList.add('is-scrambling');
+
+    if (state.frameId === null) {
+      const render = () => {
+        const currentState = states.get(element);
+        if (!currentState || !currentState.active) {
+          if (currentState) currentState.frameId = null;
+          return;
+        }
+
+        renderFrame(element, currentState);
+        currentState.frameId = window.requestAnimationFrame(render);
+      };
+
+      state.frameId = window.requestAnimationFrame(render);
+    }
+
+    renderFrame(element, state);
+  }
+
+  function handlePointerLeave(event) {
+    const element = event.currentTarget;
+    if (!element) return;
+
+    const state = states.get(element);
+    if (!state) return;
+
+    state.active = false;
+    state.lastText = '';
+    element.classList.remove('is-scrambling');
+
+    if (state.frameId !== null) {
+      window.cancelAnimationFrame(state.frameId);
+      state.frameId = null;
+    }
+
+    element.textContent = state.originalText;
+  }
+
+  function renderFrame(element, state) {
+    const now = performance.now();
+    const revealProgress = Math.min(1, Math.max(0, (now - state.revealStart) / VAPORIZER_REVEAL_MS));
+    const nextText = buildVaporizedText(element, state.originalText, state.pointerX, state.pointerY, revealProgress, state);
+
+    if (nextText !== state.lastText) {
+      element.textContent = nextText;
+      state.lastText = nextText;
+    }
+  }
+
+  function buildVaporizedText(element, text, pointerClientX, pointerClientY, revealProgress, state) {
+    if (!text) return text;
+
+    const rect = element.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(element);
+    const fontSize = parseFloat(computedStyle.fontSize) || 16;
+    const lineHeight = getLineHeight(computedStyle, fontSize);
+    const charWidth = getCharWidth(computedStyle, fontSize, state);
+    const contentX = pointerClientX - rect.left;
+    const contentY = pointerClientY - rect.top;
+    const lines = text.split('\n');
+    const radius = VAPORIZER_RADIUS_PX;
+    const radiusSquared = radius * radius;
+    let cursorSeed = Math.floor((contentX + contentY) + performance.now() / 40);
+    let changed = false;
+    const output = [];
+
+    for (let row = 0; row < lines.length; row++) {
+      const line = lines[row];
+      let lineOutput = '';
+
+      for (let column = 0; column < line.length; column++) {
+        const char = line[column];
+
+        if (/\s/.test(char)) {
+          lineOutput += char;
+          continue;
+        }
+
+        const charCenterX = column * charWidth + charWidth * 0.5;
+        const charCenterY = row * lineHeight + lineHeight * 0.5;
+        const dx = contentX - charCenterX;
+        const dy = contentY - charCenterY;
+        const distanceSquared = dx * dx + dy * dy;
+
+        if (distanceSquared <= radiusSquared) {
+          const distanceFactor = 1 - Math.min(1, Math.sqrt(distanceSquared) / radius);
+          const revealThreshold = Math.min(1, revealProgress + distanceFactor * 0.45);
+          const glyphSeed = ((row + 1) * 31 + (column + 1) * 17) % 1000 / 1000;
+
+          if (revealThreshold >= glyphSeed) {
+            lineOutput += char;
+          } else {
+            const glyphIndex = (column * 11 + row * 17 + cursorSeed++) % VAPORIZER_GLYPHS.length;
+            lineOutput += VAPORIZER_GLYPHS[glyphIndex];
+          }
+
+          changed = true;
+        } else {
+          lineOutput += char;
+        }
+      }
+
+      output.push(lineOutput);
+    }
+
+    return changed ? output.join('\n') : text;
+  }
+
+  function getCharWidth(computedStyle, fontSize, state) {
+    const fontKey = `${computedStyle.fontStyle}|${computedStyle.fontVariant}|${computedStyle.fontWeight}|${computedStyle.fontStretch}|${fontSize}|${computedStyle.fontFamily}`;
+
+    if (state.charWidth && state.fontKey === fontKey) {
+      return state.charWidth;
+    }
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return fontSize * 0.6;
+    }
+
+    context.font = `${computedStyle.fontStyle} ${computedStyle.fontVariant} ${computedStyle.fontWeight} ${fontSize}px ${computedStyle.fontFamily}`;
+    const measured = context.measureText('0').width || fontSize * 0.6;
+
+    state.charWidth = measured;
+    state.fontKey = fontKey;
+    return measured;
+  }
+
+  function getLineHeight(computedStyle, fontSize) {
+    const parsedLineHeight = parseFloat(computedStyle.lineHeight);
+    if (!Number.isNaN(parsedLineHeight)) {
+      return parsedLineHeight;
+    }
+
+    return fontSize * 1.2;
+  }
+
+  return { attach };
+}
+
+window.textVaporizerEngine = createTextVaporizerEngine();
+
 function Mt(t) {
   var e = document.querySelector("#bg-animation-canvas");
   let r = !0;
@@ -1336,11 +1551,6 @@ function Mt(t) {
         return o.color;
       },
     }),
-    a(),
-    document.addEventListener("keydown", (t) => {
-      "f" == t.key &&
-        document.body.requestFullscreen &&
-        document.body.requestFullscreen().catch((t) => console.warn(t));
-    }));
+    a());
 }
 Mt();

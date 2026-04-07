@@ -69,6 +69,8 @@ const COMMANDS = {
     gui: 'Open GUI portfolio tab (placeholder)',
     themes: 'List available themes',
     'theme <name>': 'Apply a theme',
+    fonts: 'List available fonts',
+    'font <name>': 'Apply a font',
     resetboot: 'Reset boot flag and rerun POST on next reload',
     design: 'Explain design approach and anti-design hobby',
     'bganim [on|off|status]': 'Toggle background animation visibility',
@@ -82,6 +84,12 @@ const THEME_PRESETS = {
     amber: { label: 'Amber CRT' },
     matrix: { label: 'Matrix Green' },
     ice: { label: 'Ice Blue' }
+};
+
+const FONT_PRESETS = {
+    xylver: { label: 'Xylver' },
+    ibm: { label: 'IBM Plex Mono' },
+    jetbrains: { label: 'JetBrains Mono' }
 };
 
 const BOOT_SESSION_KEY = 'advait_terminal_boot_done_session';
@@ -122,6 +130,7 @@ req   : |____|_____|___|___`
 
 const SCRAMBLE_GLYPHS = ' .,·-•─~+:;=*π’“”┐┌┘└┼├┤┴┬│╗╔╝╚╬╠╣╩╦║░▒▓█▄▀▌▐■!?&#$@aàbcdefghijklmnoòpqrstuüvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%()'.split('');
 const SCRAMBLE_RADIUS_PX = 34;
+const SCRAMBLE_REVEAL_MS = 700;
 
 const SKILL_GROUPS = {
     languages: ['Python', 'JavaScript', 'Dart', 'C / C++'],
@@ -173,6 +182,7 @@ class TerminalApp {
         this.outputEl = document.getElementById('terminal-output');
         this.inputEl = document.getElementById('terminal-input');
         this.promptEl = document.querySelector('.prompt');
+        this.terminalContainerEl = document.getElementById('terminal-container');
         this.sideSigilEl = document.getElementById('side-sigil');
         this.sigilWaveformEl = document.getElementById('sigil-waveform');
         this.designAudio = new Audio(encodeURI('05. I Really Want to Stay at Your House.flac'));
@@ -185,6 +195,7 @@ class TerminalApp {
         this.history = [];
         this.historyIndex = -1;
         this.activeTheme = 'mono';
+        this.activeFont = 'xylver';
         this.isBooting = true;
 
         this.bindEvents();
@@ -206,32 +217,18 @@ class TerminalApp {
     }
 
     bindStaticTextScramble() {
-        this.bindTextScramble(this.sideSigilEl);
+        if (!window.textVaporizerEngine) return;
+
+        window.textVaporizerEngine.attach(this.terminalContainerEl);
+        window.textVaporizerEngine.attach(this.sideSigilEl);
+        if (this.sigilWaveformEl) {
+            window.textVaporizerEngine.attach(this.sigilWaveformEl);
+        }
     }
 
     bindTextScramble(root) {
-        if (!root) return;
-
-        const selector = '.output-line, .output-pre, .terminal-link, .sigil-side-pre';
-        const targets = [];
-
-        if (root.matches && root.matches(selector)) {
-            targets.push(root);
-        }
-
-        if (root.querySelectorAll) {
-            targets.push(...root.querySelectorAll(selector));
-        }
-
-        for (const element of targets) {
-            if (!element || element.dataset.scrambleBound === 'true') continue;
-
-            element.dataset.scrambleBound = 'true';
-            element.classList.add('scramble-text');
-            element.addEventListener('pointerenter', (event) => this.startTextScramble(element, event));
-            element.addEventListener('pointermove', (event) => this.startTextScramble(element, event));
-            element.addEventListener('pointerleave', () => this.stopTextScramble(element));
-            element.addEventListener('pointercancel', () => this.stopTextScramble(element));
+        if (window.textVaporizerEngine) {
+            window.textVaporizerEngine.attach(root);
         }
     }
 
@@ -242,24 +239,60 @@ class TerminalApp {
         const state = existing || {
             originalText: element.textContent || '',
             active: false,
-            lastText: ''
+            lastText: '',
+            pointerX: 0,
+            pointerY: 0,
+            revealStart: 0,
+            frameId: null
         };
 
         if (!existing) {
             state.originalText = element.textContent || '';
         }
+
+        const nextPointerX = event?.clientX ?? state.pointerX;
+        const nextPointerY = event?.clientY ?? state.pointerY;
+        const movedFarEnough = Math.abs(nextPointerX - state.pointerX) > 4 || Math.abs(nextPointerY - state.pointerY) > 4;
+
+        state.pointerX = nextPointerX;
+        state.pointerY = nextPointerY;
+        if (!state.active || movedFarEnough) {
+            state.revealStart = performance.now();
+        }
+
         state.active = true;
         this.scrambleStates.set(element, state);
         element.classList.add('is-scrambling');
 
-        this.updateTextScramble(element, event);
+        this.scheduleScrambleFrame(element);
     }
 
-    updateTextScramble(element, event) {
+    scheduleScrambleFrame(element) {
         const state = this.scrambleStates.get(element);
-        if (!state || !state.active || !event) return;
+        if (!state || !state.active || state.frameId !== null) return;
 
-        const result = this.scrambleTextAroundPointer(element, state.originalText, event);
+        const render = () => {
+            const current = this.scrambleStates.get(element);
+            if (!current || !current.active) {
+                if (current) current.frameId = null;
+                return;
+            }
+
+            this.updateTextScramble(element);
+            current.frameId = window.requestAnimationFrame(render);
+        };
+
+        state.frameId = window.requestAnimationFrame(render);
+    }
+
+    updateTextScramble(element) {
+        const state = this.scrambleStates.get(element);
+        if (!state || !state.active) return;
+
+        const now = performance.now();
+        const revealProgress = Math.min(1, Math.max(0, (now - state.revealStart) / SCRAMBLE_REVEAL_MS));
+
+        const result = this.scrambleTextAroundPointer(element, state.originalText, state.pointerX, state.pointerY, revealProgress);
         if (result && result !== state.lastText) {
             element.textContent = result;
             state.lastText = result;
@@ -272,11 +305,15 @@ class TerminalApp {
 
         element.classList.remove('is-scrambling');
         state.active = false;
+        if (state.frameId !== null) {
+            window.cancelAnimationFrame(state.frameId);
+            state.frameId = null;
+        }
         state.lastText = '';
         element.textContent = state.originalText;
     }
 
-    scrambleTextAroundPointer(element, text, event) {
+    scrambleTextAroundPointer(element, text, pointerClientX, pointerClientY, revealProgress = 0) {
         if (!text) return text;
 
         const rect = element.getBoundingClientRect();
@@ -284,8 +321,8 @@ class TerminalApp {
         const fontSize = parseFloat(computedStyle.fontSize) || 16;
         const lineHeight = this.getLineHeight(computedStyle, fontSize);
         const charWidth = this.getCharWidth(element, computedStyle, fontSize);
-        const contentX = event.clientX - rect.left;
-        const contentY = event.clientY - rect.top;
+        const contentX = pointerClientX - rect.left;
+        const contentY = pointerClientY - rect.top;
         const lines = text.split('\n');
         const radius = SCRAMBLE_RADIUS_PX;
         const radiusSquared = radius * radius;
@@ -311,8 +348,12 @@ class TerminalApp {
                 const distanceSquared = dx * dx + dy * dy;
 
                 if (distanceSquared <= radiusSquared) {
-                    const glyphIndex = (column * 11 + row * 17 + cursorSeed++) % SCRAMBLE_GLYPHS.length;
-                    lineOutput += SCRAMBLE_GLYPHS[glyphIndex];
+                    if (Math.random() < revealProgress) {
+                        lineOutput += char;
+                    } else {
+                        const glyphIndex = (column * 11 + row * 17 + cursorSeed++) % SCRAMBLE_GLYPHS.length;
+                        lineOutput += SCRAMBLE_GLYPHS[glyphIndex];
+                    }
                     changed = true;
                 } else {
                     lineOutput += char;
@@ -406,6 +447,7 @@ class TerminalApp {
 
     async boot() {
         this.applyTheme(this.activeTheme, false);
+        this.applyFont(this.activeFont, false);
 
         const shouldRunBootSequence = this.shouldRunBootSequence();
 
@@ -613,6 +655,12 @@ class TerminalApp {
             case 'theme':
                 this.applyTheme(argText);
                 break;
+            case 'fonts':
+                this.printFonts();
+                break;
+            case 'font':
+                this.applyFont(argText);
+                break;
             case 'resetboot':
                 this.resetBootSequence();
                 break;
@@ -679,6 +727,49 @@ class TerminalApp {
         if (printFeedback) {
             this.printBlock([
                 this.makeLine(`Theme applied: ${selected} (${THEME_PRESETS[selected].label})`, 'text-green')
+            ]);
+        }
+    }
+
+    printFonts() {
+        const lines = [
+            this.makeLine('Available Fonts', 'text-orange')
+        ];
+
+        Object.entries(FONT_PRESETS).forEach(([key, font]) => {
+            const suffix = this.activeFont === key ? ' [active]' : '';
+            lines.push(this.makeLine(`${key.padEnd(10, ' ')} - ${font.label}${suffix}`, 'text-cyan'));
+        });
+
+        lines.push(this.makeLine('Use: font <name>', 'text-comment'));
+        this.printBlock(lines);
+    }
+
+    applyFont(fontName, printFeedback = true) {
+        const selected = (fontName || '').trim().toLowerCase();
+
+        if (!selected) {
+            this.printBlock([
+                this.makeLine('Usage: font <name>', 'text-yellow'),
+                this.makeLine(`Try one of: ${Object.keys(FONT_PRESETS).join(', ')}`, 'text-comment')
+            ]);
+            return;
+        }
+
+        if (!FONT_PRESETS[selected]) {
+            this.printBlock([
+                this.makeLine(`Unknown font: ${selected}`, 'text-red'),
+                this.makeLine(`Available: ${Object.keys(FONT_PRESETS).join(', ')}`, 'text-comment')
+            ]);
+            return;
+        }
+
+        document.documentElement.setAttribute('data-font', selected);
+        this.activeFont = selected;
+
+        if (printFeedback) {
+            this.printBlock([
+                this.makeLine(`Font applied: ${selected} (${FONT_PRESETS[selected].label})`, 'text-green')
             ]);
         }
     }

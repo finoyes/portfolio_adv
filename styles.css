@@ -1,3 +1,60 @@
+@font-face {
+    font-family: 'Xylver';
+    src:
+        local('Xylver'),
+        local('XYLVER'),
+        url('./assets/fonts/xylver.woff2') format('woff2');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('./assets/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('./assets/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('./assets/fonts/ibm-plex-mono-700-latin.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
 :root {
     --bg: #000000;
     --bg-soft: #0d0d0d;
@@ -11,7 +68,22 @@
     --glow-a: rgba(255, 255, 255, 0.08);
     --glow-b: rgba(255, 255, 255, 0.06);
     --scanline: rgba(255, 255, 255, 0.03);
-    --font-mono: 'IBM Plex Mono', monospace;
+    --font-xylver: 'Xylver', 'IBM Plex Mono', monospace;
+    --font-ibm: 'IBM Plex Mono', monospace;
+    --font-jetbrains: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    --font-mono: var(--font-xylver);
+}
+
+html[data-font='xylver'] {
+    --font-mono: var(--font-xylver);
+}
+
+html[data-font='ibm'] {
+    --font-mono: var(--font-ibm);
+}
+
+html[data-font='jetbrains'] {
+    --font-mono: var(--font-jetbrains);
 }
 
 html[data-theme='amber'] {
