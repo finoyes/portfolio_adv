@@ -6,3 +6,6 @@
 
 # Workflow files must remain readable by GitHub to execute Actions.
 .github/workflows/** !filter !diff
+
+# Keep setup instructions readable
+GIT_CRYPT_SETUP.md !filter !diff
